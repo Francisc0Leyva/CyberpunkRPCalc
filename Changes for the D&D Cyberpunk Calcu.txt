@@ -1,0 +1,40 @@
+Changes for the D&D Cyberpunk Calculator:
+
+Remove: Strength Training.
+
+Fix: Melee Training should increase crit rate by 5%, not 10% for melee attacks.
+Choi Li Fut: Unarmed melee attacks deal Pure Damage. (Should prefix attack damage with "Pure")
+Karate: If attacked first, deal 20% extra unarmed damage. (Only do this if "Is Returned Attack" is checked)
+Tae Kwon Do: If attacking first, deal 50% more unarmed damage on the first strike.
+Text boxes such as "Weapon Type" and "Hands" can't be typed in.
+Character Tags are on page 2. Add "Civil Stats" 
+Make Weapon Damage box is wider, allowing for a stat of at least 1,000,000 to fit comfortably.
+Informational boxes and Calculation Boxes cannot be edited by the user.
+
+Add: "Fencing" -- Bladed weapons gain a 15% bonus to crit damage.
+"Is Returned Attack" checkmark
+"Is Attacking First" checkmark
+"Lock" button, which makes it so that all player statistics can no longer be modified.
+"Thai Kick Boxing" under "Character Tags" (Increases the unarmed damage output by 50%, but no longer has the cybermod's effect.)
+"Hands" Cybermod: "Pretty Tattoo" (Increase Cool Statistic by 3.)
+Additional "Hands" dropdown, though this one is grayed out, unless "Pretty Tattoo" is in slot one.
+
+Buff/Debuff Section:
+Minus or + dropdown. Then, immediately after, a number input with % at the end. Then, Statistics
+
+Character Tags:
+Wrestling: Allows the player to Grapple. Has a 3/4 chance to succeed. If it succeeds it will say "Player is stunned. Opponent is stunned." If it fails, it will say "Player is stunned."
+
+Calculations should include Damage Range (Lowest damage possible to highest damage possible)
+
+
+Future plans to keep in mind:
+Page One: Character Stats, Civil Stats, Cybermods. Will eventually have an "Increase Level" mechanic and stuff.
+Page Two: Origins, Traits and Tags (There will be a lot)
+Page Three: Eurodollars, Inventory, Equipped, etc.
+
+Fourth page will be specific types of calculations, such as
+Modifiers and Status Effects
+Combat: "Kick" "Grapple" (Unarmed/Ranged/Bladed/Blunt) Attack, 
+General: D2-D100 (Player input)
+And more coming soon...
