@@ -78,7 +78,6 @@ class CyberpunkAttackGuide(tk.Tk):
         ttk.Label(center_frame, text="Character Tags", font=("Arial", 10, "bold")).pack(anchor='w')
         self.tags = {}
         tag_descriptions = {
-            "Strength Training": "Improves Body divisor: Unarmed(10→9), Blunt(8→7), Sharp(10→9).",
             "Archery": "+15% hit/crit if using arrows.",
             "Brawling": "+10 Reflexes for Unarmed.",
             "Melee Training": "+10% crit for all melee.",
@@ -242,19 +241,19 @@ class CyberpunkAttackGuide(tk.Tk):
         # Calculate base damage
         skill_rand = random.randint(skill, cool + 50)
         if self.weapon_type.get() == "Unarmed Melee":
-            body_divisor = 9 if self.tags["Strength Training"].get() else 10
+            body_divisor = 10
             base_damage = (body / body_divisor + cool / 5 + reflexes * (0.01 * skill_rand) + 0.75)
             base_damage *= damage_multiplier
             crit_chance = min(1.0, skill * 0.01 + 0.03 + crit_bonus)
             hit_chance = 1.0
         elif self.weapon_type.get() == "Blunt Weapon Melee":
-            body_divisor = 7 if self.tags["Strength Training"].get() else 8
+            body_divisor = 8
             base_damage = (body / body_divisor + cool / 5 + reflexes * (0.01 * skill_rand) + 0.75) * (weapon_damage * 0.01)
             base_damage *= damage_multiplier
             crit_chance = min(1.0, skill * 0.01 + 0.03 + crit_bonus)
             hit_chance = 1.0
         elif self.weapon_type.get() == "Sharp Weapon Melee":
-            body_divisor = 9 if self.tags["Strength Training"].get() else 10
+            body_divisor = 10
             base_damage = (body / body_divisor + cool / 4 + reflexes * (0.01 * skill_rand) + 0.75) * (weapon_damage * 0.01)
             base_damage *= damage_multiplier
             crit_chance = min(1.0, skill * 0.01 + 0.03 + crit_bonus)
