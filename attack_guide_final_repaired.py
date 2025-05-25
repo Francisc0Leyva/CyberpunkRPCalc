@@ -78,17 +78,20 @@ class CyberpunkAttackGuide(tk.Tk):
         ttk.Label(center_frame, text="Character Tags", font=("Arial", 10, "bold")).pack(anchor='w')
         self.tags = {}
         tag_descriptions = {
-            "Archery": "+15% hit/crit if using arrows.",
-            "Brawling": "+10 Reflexes for Unarmed.",
-            "Melee Training": "+10% crit for all melee.",
             "Aikido": "+25% Unarmed damage.",
             "Animal Kung Fu": "15% chance to cause Stun (Unarmed).",
+            "Archery": "+15% hit/crit if using arrows.",
             "Boxing": "+10 Body for Unarmed.",
+            "Brawling": "+10 Reflexes for Unarmed.",
             "Capoeria": "20% chance to cause Confuse (Unarmed).",
             "Choi Li Fut": "Adds 'Pure damage' text (Unarmed).",
+            "Fencing" : "+15% crit for all bladed weapons.",
             "Judo": "25% chance to cause Taunt (Unarmed).",
             "Karate": "Special future-based modifier.",
-            "Tae Kwon Do": "Prefix 'Surprise'. Shows full formula."
+            "Melee Training": "+5% crit for all melee.",
+            "Tae Kwon Do": "Prefix 'Surprise'. Shows full formula.",
+            "Thai Kick Boxing": "Enables new damage type, kick, increases damage by 50%, doesn't use cyberwear",
+            "Wrestling": "enables new damage type, grappling, may stun the enemy"
         }
         for tag, desc in tag_descriptions.items():
             var = tk.BooleanVar()
@@ -112,13 +115,15 @@ class CyberpunkAttackGuide(tk.Tk):
 
         ttk.Label(right_frame, text="Weapon", font=("Arial", 10, "bold")).pack(anchor='w', pady=(10, 0))
         ttk.Label(right_frame, text="Weapon Type:").pack(anchor='w')
-        self.weapon_type = ttk.Combobox(right_frame, values=["Unarmed Melee", "Blunt Weapon Melee", "Sharp Weapon Melee", "Ranged Attack"])
+        #TODO:banaid fix putting kick in the drop box for now, only works if the user has thai kickboxing
+        # also wrestling grappling
+        self.weapon_type = ttk.Combobox(right_frame, values=["Unarmed Melee", "Blunt Weapon Melee", "Sharp Weapon Melee", "Ranged Attack", "Kick", "Grappling"], state="readonly")
         self.weapon_type.current(0)
         self.weapon_type.pack(anchor='w')
         self.weapon_type.bind("<<ComboboxSelected>>", self.toggle_weapon_damage)
 
         ttk.Label(right_frame, text="Weapon Damage:").pack(anchor='w')
-        self.weapon_damage = tk.Spinbox(right_frame, from_=0, to=1000, width=5)
+        self.weapon_damage = tk.Spinbox(right_frame, from_=0, to=1000, width=20)
         self.weapon_damage.pack(anchor='w')
 
         self.smart_weapon = tk.BooleanVar()
@@ -130,43 +135,86 @@ class CyberpunkAttackGuide(tk.Tk):
         self.always_crit = tk.BooleanVar()
         ttk.Checkbutton(right_frame, text="Always Crit", variable=self.always_crit).pack(anchor='w')
 
+        self.returnedAttack = tk.BooleanVar()
+        ttk.Checkbutton(right_frame, text="Returned Attack", variable=self.always_crit).pack(anchor='w')
+
+        self.attackingFirst = tk.BooleanVar()
+        ttk.Checkbutton(right_frame, text="Attacking First", variable=self.always_crit).pack(anchor='w')
+
+        self.lock_stats = tk.BooleanVar()
+        ttk.Checkbutton(right_frame, text="Lock Stats", variable=self.lock_stats, command=self.toggle_stats_lock).pack(anchor='w')
+
+
+
         ttk.Label(left_frame, text="Cyber Mods", font=("Arial", 10, "bold")).pack(anchor='w', pady=(10, 0))
         ttk.Label(left_frame, text="Hands").pack(anchor='w')
         self.cyber_mod = ttk.Combobox(left_frame, values=[
             "None", "Ballistic Coprocessor", "Smart Link", "Scratchers",
             "Rippers", "Wolvers", "Big Knucks", "Slice N' Dice",
-            "Heatsaw Hands", "Carbon Knuckles"
-        ])
+            "Heatsaw Hands", "Carbon Knuckles", "Pretty Tattoo"
+        ], state = "readonly")
         self.cyber_mod.current(0)
         self.cyber_mod.pack(anchor='w')
+        self.cyber_mod.bind("<<ComboboxSelected>>", self.check_hand_tattoo)
+
+        #TODO: change the weapon calculation logic '
+        ttk.Label(left_frame, text="Hands(1)").pack(anchor='w')
+        self.cyber_mod_1 = ttk.Combobox(left_frame, values=[
+            "None", "Ballistic Coprocessor", "Smart Link", "Scratchers",
+            "Rippers", "Wolvers", "Big Knucks", "Slice N' Dice",
+            "Heatsaw Hands", "Carbon Knuckles"
+        ], state = "readonly")
+        self.cyber_mod_1.current(0)
+        self.cyber_mod_1.pack(anchor='w')
+        self.cyber_mod_1.config(state="disabled")
+
+
 
         self.description_box = tk.Text(bottom_frame, height=5)
         self.description_box.pack(fill=tk.X, padx=5, pady=5)
+        self.description_box.config(state="disabled")
 
         ttk.Button(bottom_frame, text="Calculate", command=self.calculate).pack(pady=5)
 
         self.result_text = tk.Text(bottom_frame, height=15, relief=tk.SOLID, borderwidth=1)
         self.result_text.pack(fill=tk.BOTH, expand=True, padx=5, pady=5)
+        self.result_text.config(state="disabled")
+
+    def check_hand_tattoo(self, event):
+        selected_mod = event.widget.get()
+        if self.cyber_mod.get() == "Pretty Tattoo":
+            self.cyber_mod_1.config(state="normal")
+        else:
+            self.cyber_mod_1.config(state="disabled")
+
+    def toggle_stats_lock(self):
+        state = "disabled" if self.lock_stats.get() else "normal"
+        for spinbox in self.attributes.values():
+            spinbox.config(state=state)
 
     def set_description(self, text):
+        self.description_box.config(state="normal")
         self.description_box.delete(1.0, tk.END)
         self.description_box.insert(tk.END, text)
+        self.description_box.config(state="disabled")
 
     def clear_description(self):
+        self.description_box.config(state="normal")
         self.description_box.delete(1.0, tk.END)
+        self.description_box.config(state="disabled")
 
     def toggle_weapon_damage(self, event=None):
         if self.weapon_type.get() == "Unarmed Melee":
-            self.weapon_damage.config(state='disabled')
             self.weapon_damage.delete(0, tk.END)
             self.weapon_damage.insert(0, '0')
+            self.weapon_damage.config(state='disabled')
         else:
             self.weapon_damage.config(state='normal')  # <-- END OF METHOD
 
     def calculate(self):
+        self.result_text.config(state="normal")
         self.result_text.delete(1.0, tk.END)
         try:
-            # All these lines MUST be indented under try:
             body = int(self.attributes["Body"].get())
             willpower = int(self.attributes["Willpower"].get())
             cool = int(self.attributes["Cool"].get())
@@ -184,6 +232,8 @@ class CyberpunkAttackGuide(tk.Tk):
         if self.status_effects["Drenched"].get():
             cool = max(10, cool - 5)
 
+        if self.cyber_mod.get() == "Pretty Tattoo":
+            cool += 3
 
         # Tags adjustments
         if self.tags["Brawling"].get() and self.weapon_type.get() == "Unarmed Melee":
@@ -201,6 +251,7 @@ class CyberpunkAttackGuide(tk.Tk):
         crit_multiplier = 1.0
         inflicts_bleed = False
         inflicts_burn = False
+        inflicts_stun = False
         if self.cyber_mod.get() == "Ballistic Coprocessor":
             hit_bonus += 0.15
             crit_bonus += 0.05
@@ -234,11 +285,19 @@ class CyberpunkAttackGuide(tk.Tk):
             hit_bonus += 0.15
             crit_bonus += 0.15
         if self.tags["Melee Training"].get() and self.weapon_type.get() in ["Unarmed Melee", "Blunt Weapon Melee", "Sharp Weapon Melee"]:
-            crit_bonus += 0.10
+            crit_bonus += 0.05
         if self.tags["Aikido"].get() and self.weapon_type.get() == "Unarmed Melee":
             damage_multiplier += 0.25
+        if self.tags["Fencing"].get() and self.weapon_type.get() in ["Sharp Weapon Melee"]:
+            crit_bonus += 0.15
+        # placing the karate attack first bonus here for now
+        if self.tags["Karate"].get() and self.returnedAttack.get():
+            hit_bonus += 0.20
+        if self.tags["Tae Kwon Do"].get() and self.attackingFirst.get():
+            hit_bonus += 0.50
 
         # Calculate base damage
+        #TODO check damage multiplier math
         skill_rand = random.randint(skill, cool + 50)
         if self.weapon_type.get() == "Unarmed Melee":
             body_divisor = 10
@@ -263,8 +322,36 @@ class CyberpunkAttackGuide(tk.Tk):
             hit_chance = min(1.0, ((technical / 2 + skill / 2) * 0.01) + 0.47 + hit_bonus)
             crit_chance = min(1.0, skill * 0.01 + 0.03 + crit_bonus)
             base_damage *= damage_multiplier
+        elif self.weapon_type.get() == "Kick":
+            if not self.tags["Thai Kick Boxing"].get():
+                self.result_text.insert(tk.END, "Invalid weapon type selected.\n")
+                self.result_text.config(state="disabled")
+                return
+            body_divisor = 10
+            base_damage = (body / body_divisor + cool / 5 + reflexes * (0.01 * skill_rand) + 0.75)
+            base_damage *= 1.50
+            crit_chance = min(1.0, skill * 0.01 + 0.03 )
+            hit_chance = 1.0
+        elif self.weapon_type.get() == "Grappling":
+            if not self.tags["Wrestling"].get():
+                self.result_text.insert(tk.END, "Invalid weapon type selected.\n")
+                self.result_text.config(state="disabled")
+                return
+            grapple_success = random.random() < 0.75
+            if grapple_success:
+                inflicts_stun = True
+                body_divisor = 10
+                base_damage = (body / body_divisor + cool / 5 + reflexes * (0.01 * skill_rand) + 0.75)
+                base_damage *= 1.50
+                crit_chance = min(1.0, skill * 0.01 + 0.03 + crit_bonus)
+                hit_chance = 1.0
+            else:
+                self.result_text.insert(tk.END, "Grapple failed! You are stunned.\n")
+                self.result_text.config(state="disabled")
+                return
         else:
             self.result_text.insert(tk.END, "Invalid weapon type selected.\n")
+            self.result_text.config(state="disabled")
             return
         # Apply Focus reroll if enabled
         if self.status_effects["Focus"].get():
@@ -303,6 +390,7 @@ class CyberpunkAttackGuide(tk.Tk):
                     base_damage *= (1 + 0.20 + skill * 0.01 + crit_multiplier)
 
         # Round and display damage
+        # Pure damage cannot be reduced TODO: CHOI LI FUT weapon logic, ignores enemy damage reduction
         final_damage = int(base_damage)
         if self.tags["Tae Kwon Do"].get() and self.weapon_type.get() == "Unarmed Melee":
             self.result_text.insert(tk.END, f"Surprise Result: {final_damage} (Formula used with bonus)\n")
@@ -320,7 +408,8 @@ class CyberpunkAttackGuide(tk.Tk):
                 self.result_text.insert(tk.END, "Status Effect: Bleed\n")
             if inflicts_burn:
                 self.result_text.insert(tk.END, "Status Effect: Burn\n")
-
+            if inflicts_stun:
+                self.result_text.insert(tk.END, "Status Effect: Stun\n")
             if is_crit:
                 self.result_text.insert(tk.END, f"{damage_display} (CRIT)\n", ("bold",))
             else:
@@ -329,6 +418,8 @@ class CyberpunkAttackGuide(tk.Tk):
         # Text formatting tags
         self.result_text.tag_configure("bold", foreground = "red", font=("TkDefaultFont", 10, "bold"))
         self.result_text.tag_configure("italic", font=("TkDefaultFont", 10, "italic"))
+        self.result_text.config(state="disabled")
+
 '''
       self.result_text.insert([
             f"Damage: {final_damage:.2f}",
