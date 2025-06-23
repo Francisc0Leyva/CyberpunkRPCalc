@@ -10,5 +10,5 @@ The goal of this project is to facilitate a cyberpunk roleplay campaign. I've ye
    cd CyberpunkRPCalc
    ```
 2. ``` bash
-   python attack_guide_final_repaired.py
+   python main.py
    ```
