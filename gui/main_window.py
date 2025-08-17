@@ -19,25 +19,37 @@ class CyberpunkAttackGuide(tk.Tk):
 
         self.top_frame = TopFrame(self)
         self.top_frame.pack(fill=tk.X, padx=10, pady=5)
+
+
         self.attributes_panel = AttributesPanel(self)
         self.attributes_panel.pack(side=tk.LEFT, fill=tk.Y, padx=10, pady=5)
+        
         self.cyber_mods_panel = CyberModsPanel(self)
-        self.cyber_mods_panel.pack(side=tk.LEFT, fill=tk.Y, padx=10, pady=5)
+        self.cyber_mods_panel.pack(side=tk.LEFT, padx=10, pady=5)
+
+
         self.tags_panel = TagsPanel(self, self.set_description, self.clear_description)
-        self.tags_panel.pack(side=tk.LEFT, fill=tk.Y, padx=10, pady=5)
+        self.tags_panel.pack(side=tk.LEFT,  padx=10, pady=5)
         self.status_panel = StatusPanel(self, self.set_description, self.clear_description)
-        self.status_panel.pack(side=tk.LEFT, fill=tk.Y, padx=10, pady=5)
+        self.status_panel.pack(side=tk.LEFT,  padx=10, pady=5)
+        
         self.weapon_panel = WeaponPanel(self)
-        self.weapon_panel.pack(side=tk.LEFT, fill=tk.Y, padx=10, pady=5)
+        self.weapon_panel.pack(side=tk.LEFT,  padx=10, pady=5)
+        
         self.bottom_frame = ttk.Frame(self)
         self.bottom_frame.pack(side=tk.TOP, fill=tk.BOTH, expand=True, padx=10, pady=10)
+
 
         self.description_box = DescriptionBox(self.bottom_frame)
         self.description_box.pack(fill=tk.X, padx=5, pady=5)
 
         ttk.Button(self.bottom_frame, text="Calculate", command=self.calculate).pack(pady=5)
+        
         self.result_panel = ResultPanel(self.bottom_frame)
         self.result_panel.pack(fill=tk.BOTH, expand=True, padx=5, pady=5)
+
+
+        
     def set_description(self, text):
         self.description_box.set_description(text)
 

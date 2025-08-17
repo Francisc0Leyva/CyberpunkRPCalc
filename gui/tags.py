@@ -1,7 +1,7 @@
 import tkinter as tk
 from tkinter import ttk
 from tkinter import BooleanVar
-from data.constants import TAG_DESCRIPTIONS  # You can rename if needed
+from data.constants import TAG_DESCRIPTIONS  
 
 class TagsPanel(ttk.LabelFrame):
     def __init__(self, master, set_description=None, clear_description=None):

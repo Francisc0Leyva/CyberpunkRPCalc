@@ -20,7 +20,7 @@ class AttributesPanel(ttk.Frame):
             self.attributes[attr] = sb
 
         ttk.Checkbutton(
-            self, text="Lock Stats",
+            self, text="Lock Attributes",
             variable=self.lock_stats,
             command=self.toggle_stats_lock
         ).pack(anchor='w', pady=(10, 0))
