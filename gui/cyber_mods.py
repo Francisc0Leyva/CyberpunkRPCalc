@@ -1,143 +1,241 @@
 import tkinter as tk
 from tkinter import ttk
+from data.constants import CYBERMODS  # Option C schema
 
 class CyberModsPanel(ttk.LabelFrame):
-    def __init__(self, master):
+    """
+    Cyber Mods selector with hover + selection description updates.
+
+    Behavior:
+      - Hovering a combobox shows "System — Mod: desc [ (Tier X) if OS ]" in the DescriptionBox.
+      - Selecting a mod updates the DescriptionBox as well.
+      - Leaving the widget clears the DescriptionBox, even if a mod is selected.
+      - OS tier spinbox: hovering it shows the currently selected OS mod + Tier (if any).
+    """
+    def __init__(self, master, set_description=None, clear_description=None):
         super().__init__(master, text="Cyber Mods")
-        self.mods = {}
-        self._build_hands_mods()
-        self._build_arms_mods()
-        self._build_legs_mods()
-        self._build_skeleton_mods()
-        self._build_nervous_system_mods()
-        self._build_immune_system_mods()
-        self._build_frontal_cortex_mods()
-        self._build_circulatory_system_mods()
-        self._build_integumentary_system_mods()
-        self._build_ocular_system_mods()
-        self._build_operating_system_mods()
+        # description callbacks (same pattern as TagsPanel)
+        self.set_description = set_description or (lambda text: None)
+        self.clear_description = clear_description or (lambda: None)
 
-    def _build_hands_mods(self):
-        # Primary hand mod
-        ttk.Label(self, text="Hands").pack(anchor='w')
-        self.cyber_mod = ttk.Combobox(self, values=[
-            "None", "Ballistic Coprocessor", "Smart Link", "Scratchers",
-            "Rippers", "Wolvers", "Big Knucks", "Slice N' Dice",
-            "Heatsaw Hands", "Carbon Knuckles", "Pretty Tattoo"
-        ], state="readonly")
-        self.cyber_mod.current(0)
-        self.cyber_mod.pack(anchor='sw')
-        self.cyber_mod.bind("<<ComboboxSelected>>", self._check_hand_tattoo)
+        self.system_boxes = {}         # system -> [Combobox,...]
+        self.system_vars  = {}         # system -> [StringVar,...]
+        self.os_tier_var  = tk.StringVar(value="")
+        self._build_all()
 
-        # Secondary hand mod (initially disabled)
-        self.cyber_mod_1 = ttk.Combobox(self, values=[
-            "None", "Ballistic Coprocessor", "Smart Link", "Scratchers",
-            "Rippers", "Wolvers", "Big Knucks", "Slice N' Dice",
-            "Heatsaw Hands", "Carbon Knuckles"
-        ], state="readonly")
-        self.cyber_mod_1.current(0)
-        self.cyber_mod_1.pack(anchor='w', pady=(5))
-        self.cyber_mod_1.config(state="disabled")
+    # ---------- PUBLIC API ----------
+    def get_selected_mod_ids(self) -> dict:
+        """
+        Returns a dict of {system_key: [mod_id, ...]}, plus an OS tier token 'tier:X' if chosen.
+        """
+        out = {}
+        for system, boxes in self.system_boxes.items():
+            ids = []
+            mods = CYBERMODS[system]["mods"]
+            name_to_id = {m["name"]: m["id"] for m in mods}
+            for i, cb in enumerate(boxes):
+                if str(cb["state"]) != "readonly":
+                    continue
+                name = self.system_vars[system][i].get()
+                if name and name != "None":
+                    ids.append(name_to_id.get(name, name))
+            if ids:
+                out[self._syskey(system)] = ids
 
-    def _build_arms_mods(self):
-        ttk.Label(self, text="Arms").pack(anchor='w')
-        self.cyber_mod_arms = ttk.Combobox(self, values=["None", "Mantis Blades", "Monowire", "Proctile Launcher", "Gorilla Arms"], state = "readonly")
-        self.cyber_mod_arms.current(0)
-        self.cyber_mod_arms.pack(anchor='w')
+        if "Operating System" in self.system_boxes:
+            tier = self.os_tier_var.get().strip()
+            if tier:
+                out.setdefault(self._syskey("Operating System"), [])
+                out[self._syskey("Operating System")].append(f"tier:{tier}")
+        return out
 
-    def _build_legs_mods(self):
-        ttk.Label(self, text="Legs").pack(anchor='w')
-        self.cyber_mod_legs = ttk.Combobox(self, values=["None", "Double Jump Module", "Fortified Ankles", "Lynx Paws", "Reinforced Tendons", "Hidden Compartment", "Razor Ankles", "Sprint Booster", "Jump Booster", "Stabilizer"], state = "readonly")
-        self.cyber_mod_legs.current(0)
-        self.cyber_mod_legs.pack(anchor='w')
+    # ---------- INTERNAL BUILD ----------
+    def _build_all(self):
+        order = [
+            "Frontal Cortex", "Ocular System", "Circulatory System", "Immune System",
+            "Integumentary System", "Operating System", "Skeleton", "Hands", "Arms", "Legs"
+        ]
+        for system in [s for s in order if s in CYBERMODS]:
+            self._build_system(system)
 
-        
-    def _build_skeleton_mods(self):
-        # Primary Skeleton mod
-        ttk.Label(self, text="Skeleton").pack(anchor='w')
-        self.cyber_mod_skeleton = ttk.Combobox(self, values=["None", "Bionic Joints", "Bionic Frame", "Synaptic Accelerators", "Reinforced Bones", "Tech-Frame", "Strength Weave", "Carbon Fiber Bones", "RAM Kinetics", "Reaction Optimizer", "Gorilla Grip"], state = "readonly")
-        self.cyber_mod_skeleton.current(0)
-        self.cyber_mod_skeleton.pack(anchor='w')
+    def _build_system(self, system: str):
+        data = CYBERMODS[system]
+        mods = data["mods"]
+        names = ["None"] + [m["name"] for m in mods]
 
-        # Secondary hand mod (initially disabled)
-        self.cyber_mod_skeleton_1 = ttk.Combobox(self, values=["None", "Bionic Joints", "Bionic Frame", "Synaptic Accelerators", "Reinforced Bones", "Tech-Frame", "Strength Weave", "Carbon Fiber Bones", "RAM Kinetics", "Reaction Optimizer", "Gorilla Grip"], state = "readonly")
-        self.cyber_mod_skeleton_1.current(0)
-        self.cyber_mod_skeleton_1.pack(anchor='w')
-        self.cyber_mod_skeleton_1.config(state="disabled")
-        self.cyber_mod_skeleton.bind("<<ComboboxSelected>>", lambda e: self.change_dropdown_state(self.cyber_mod_skeleton, self.cyber_mod_skeleton_1))
+        ttk.Label(self, text=system).pack(anchor="w", pady=(6, 0))
 
+        slots = data.get("slots", 1)
+        self.system_boxes[system] = []
+        self.system_vars[system]  = []
 
-    def _build_nervous_system_mods(self):
-        ttk.Label(self, text="Nervous System").pack(anchor='w')
-        self.cyber_mod_nervous_system = ttk.Combobox(self, values=["None", "Mantis Blades", "Monowires", "Gernade Launcher", "Gorilla Arms"], state = "readonly")
-        self.cyber_mod_nervous_system.current(0)
-        self.cyber_mod_nervous_system.pack(anchor='w')
+        for i in range(slots):
+            var = tk.StringVar(value="None")
+            cb = ttk.Combobox(self, values=names, state=("readonly" if i == 0 else "disabled"),
+                              textvariable=var)
+            cb.pack(anchor="w")
 
-    def _build_immune_system_mods(self):
-        ttk.Label(self, text="Arms").pack(anchor='w')
-        self.cyber_mod_arms = ttk.Combobox(self, values=["None", "Mantis Blades", "Monowires", "Gernade Launcher", "Gorilla Arms"], state = "readonly")
-        self.cyber_mod_arms.current(0)
-        self.cyber_mod_arms.pack(anchor='w')
+            # Selection -> update desc
+            cb.bind("<<ComboboxSelected>>",
+                    lambda e, sys=system, idx=i: self._on_slot_change(sys, idx))
 
-    def _build_frontal_cortex_mods(self):
-        ttk.Label(self, text="Arms").pack(anchor='w')
-        self.cyber_mod_arms = ttk.Combobox(self, values=["None", "Mantis Blades", "Monowires", "Gernade Launcher", "Gorilla Arms"], state = "readonly")
-        self.cyber_mod_arms.current(0)
-        self.cyber_mod_arms.pack(anchor='w')
+            # Hover in -> show desc of current selection (if any)
+            cb.bind("<Enter>",
+                    lambda e, sys=system, idx=i: self._hover_show(sys, idx))
+            # Hover out -> clear
+            cb.bind("<Leave>", lambda e: self.clear_description())
 
-    def _build_circulatory_system_mods(self):
-        ttk.Label(self, text="Arms").pack(anchor='w')
-        self.cyber_mod_arms = ttk.Combobox(self, values=["None", "Mantis Blades", "Monowires", "Gernade Launcher", "Gorilla Arms"], state = "readonly")
-        self.cyber_mod_arms.current(0)
-        self.cyber_mod_arms.pack(anchor='w')
+            # (optional) focus in -> also show
+            cb.bind("<FocusIn>",
+                    lambda e, sys=system, idx=i: self._hover_show(sys, idx))
 
-    def _build_integumentary_system_mods(self):
-        ttk.Label(self, text="Arms").pack(anchor='w')
-        self.cyber_mod_arms = ttk.Combobox(self, values=["None", "Mantis Blades", "Monowires", "Gernade Launcher", "Gorilla Arms"], state = "readonly")
-        self.cyber_mod_arms.current(0)
-        self.cyber_mod_arms.pack(anchor='w')
+            self.system_boxes[system].append(cb)
+            self.system_vars[system].append(var)
 
-    def _build_ocular_system_mods(self):
-        ttk.Label(self, text="Arms").pack(anchor='w')
-        self.cyber_mod_arms = ttk.Combobox(self, values=["None", "Mantis Blades", "Monowires", "Gernade Launcher", "Gorilla Arms"], state = "readonly")
-        self.cyber_mod_arms.current(0)
-        self.cyber_mod_arms.pack(anchor='w')
+        # Hands: extra slot enabled by Pretty Tattoo (locked by default)
+        if system == "Hands":
+            var = tk.StringVar(value="None")
+            extra = ttk.Combobox(self, values=names, state="disabled", textvariable=var)
+            extra.pack(anchor="w")
 
-    def _build_operating_system_mods(self):
-        ttk.Label(self, text="Arms").pack(anchor='w')
-        self.cyber_mod_arms = ttk.Combobox(self, values=["None", "Mantis Blades", "Monowires", "Gernade Launcher", "Gorilla Arms"], state = "readonly")
-        self.cyber_mod_arms.current(0)
-        self.cyber_mod_arms.pack(anchor='w')
+            extra_idx = len(self.system_boxes[system])  # index for this extra box
 
-    def _check_hand_tattoo(self, event):
-        selected = self.cyber_mod.get()
-        if selected == "Pretty Tattoo":
-            self.cyber_mod_1.config(state="readonly")
-        else:
-            self.cyber_mod_1.set("None")
-            self.cyber_mod_1.config(state="disabled")
+            # Selection -> update desc
+            extra.bind("<<ComboboxSelected>>",
+                       lambda e, sys=system, idx=extra_idx: self._on_slot_change(sys, idx))
 
+            # Hover in/out -> show/clear
+            extra.bind("<Enter>", lambda e, sys=system, idx=extra_idx: self._hover_show(sys, idx))
+            extra.bind("<Leave>", lambda e: self.clear_description())
+            # focus nicety
+            extra.bind("<FocusIn>", lambda e, sys=system, idx=extra_idx: self._hover_show(sys, idx))
 
-    def change_dropdown_state(self, current_mod_list, next_mod_list):
-        selected = current_mod_list.get()
+            self.system_boxes[system].append(extra)
+            self.system_vars[system].append(var)
 
-        if selected != "None":
-            next_mod_list.config(state="readonly")
+        # OS: spinbox for tiers, with hover handlers
+        if system == "Operating System":
+            self._build_os_tiers_row()
 
-            full_values = list(current_mod_list.cget("values"))
+    def _build_os_tiers_row(self):
+        row = ttk.Frame(self)
+        row.pack(anchor="w", pady=(2, 0))
+        ttk.Label(row, text="Tier:").pack(side=tk.LEFT)
+        self.os_tier_spin = ttk.Spinbox(
+            row,
+            values=("1", "2", "3", "4", "5", "5A", "5B"),
+            state="disabled",
+            textvariable=self.os_tier_var,
+            width=5,
+            wrap=True
+        )
+        self.os_tier_spin.pack(side=tk.LEFT, padx=(6, 0))
 
-            new_values = [v for v in full_values if v != selected]
+        # Hover in on tier spin -> show current OS selection + tier
+        self.os_tier_spin.bind("<Enter>", lambda e: self._hover_show_os_tier())
+        # Hover out -> clear
+        self.os_tier_spin.bind("<Leave>", lambda e: self.clear_description())
 
-            next_mod_list['values'] = new_values
-            next_mod_list.current(0)  
+        # If tier changes while hovered/focused, refresh description
+        # (ttk.Spinbox doesn't emit a virtual event by default; use <FocusIn> & <KeyRelease> as a light proxy)
+        self.os_tier_spin.bind("<FocusIn>", lambda e: self._hover_show_os_tier())
+        self.os_tier_spin.bind("<KeyRelease>", lambda e: self._hover_show_os_tier())
 
-        else:
-            next_mod_list.set("None")
-            next_mod_list.config(state="disabled")
+    # ---------- EVENTS ----------
+    def _on_slot_change(self, system: str, idx: int):
+        boxes = self.system_boxes[system]
+        vars_ = self.system_vars[system]
 
-        
+        chosen_name = vars_[idx].get()
+        # show description immediately on selection
+        self._show_desc(system, chosen_name)
 
+        # 1) cascade enable/disable
+        enable_next = (chosen_name != "None")
+        if idx + 1 < len(boxes):
+            if enable_next:
+                boxes[idx + 1].config(state="readonly")
+            else:
+                for j in range(idx + 1, len(boxes)):
+                    vars_[j].set("None")
+                    boxes[j].config(state="disabled")
 
+        # 2) Hands: Pretty Tattoo unlocks extra slot
+        if system == "Hands":
+            names_per_slot = [v.get() for v in vars_]
+            pretty_present = any(n == "Pretty Tattoo" for n in names_per_slot)
+            extra_idx = len(boxes) - 1
+            if pretty_present:
+                boxes[extra_idx].config(state="readonly")
+            else:
+                if vars_[extra_idx].get() == "None":
+                    boxes[extra_idx].config(state="disabled")
 
-    def get_hand_mods(self):
-        return self.cyber_mod.get(), self.cyber_mod_1.get()
+        # 3) no duplicates
+        self._enforce_no_duplicates(system)
+
+        # 4) OS tier toggle
+        if system == "Operating System":
+            selected = vars_[0].get()
+            has_selection = (selected and selected != "None")
+            self.os_tier_spin.config(state=("readonly" if has_selection else "disabled"))
+            if not has_selection:
+                self.os_tier_var.set("")
+
+    def _enforce_no_duplicates(self, system: str):
+        boxes = self.system_boxes[system]
+        vars_ = self.system_vars[system]
+        names_all = ["None"] + [m["name"] for m in CYBERMODS[system]["mods"]]
+
+        chosen = {v.get() for v in vars_ if v.get() != "None"}
+        for j, cb in enumerate(boxes):
+            current = vars_[j].get()
+            allowed = ["None"] + [n for n in names_all[1:] if n not in (chosen - {current})]
+            cb["values"] = allowed
+            if current not in allowed:
+                vars_[j].set("None")
+                cb.config(state="disabled" if j > 0 else "readonly")
+
+    # ---------- DESCRIPTION LOOKUP ----------
+    def _hover_show(self, system: str, idx: int):
+        """Show description for the current selection in this combobox."""
+        name = self.system_vars[system][idx].get()
+        self._show_desc(system, name)
+
+    def _hover_show_os_tier(self):
+        """Show OS selection + tier when hovering the tier spinbox."""
+        system = "Operating System"
+        if system not in self.system_vars or not self.system_vars[system]:
+            self.clear_description()
+            return
+        current_name = self.system_vars[system][0].get()
+        self._show_desc(system, current_name)
+
+    def _show_desc(self, system: str, mod_name: str):
+        """Push a friendly description line to the description box."""
+        if not mod_name or mod_name == "None":
+            self.clear_description()
+            return
+        mod = self._find_mod(system, mod_name)
+        if not mod:
+            self.clear_description()
+            return
+
+        # Build a friendly line: "System — Mod: description [tier hint if OS]"
+        line = f"{mod['name']}: {mod.get('desc','')}".strip()
+        if system == "Operating System":
+            tier = self.os_tier_var.get().strip()
+            if tier:
+                line += f" (Tier {tier})"
+        self.set_description(line)
+
+    def _find_mod(self, system: str, mod_name: str):
+        for m in CYBERMODS[system]["mods"]:
+            if m["name"] == mod_name:
+                return m
+        return None
+
+    # ---------- HELPERS ----------
+    def _syskey(self, system: str) -> str:
+        return system.lower().replace(" ", "_")
+    
